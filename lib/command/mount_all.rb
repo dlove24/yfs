@@ -18,49 +18,26 @@
 ### Mounts all known sources.
 ###
 
+require 'uri'
+
 module Command 
 
   def Command.mount_all(config_file)
 
-    # Parse the configuration file
-    config = YAML.load(File.open(config_file))
+    # Parse the configuration file                                                              
+    config = YAML.load(File.open(config_file))                                                  
+                                                                                                
+    # Find the named mount, extract the sink, source and options                                
+    # and then do the mount                                                                     
+    config.each{|mount_info|                                                                    
+      source = URI(mount_info[1]["source"].to_s)
+      sink = URI(mount_info[1]["sink"].to_s)
 
-    ggated_list = Array.new
-    
-    config.each{|mount_info|
-
-      puts mount_info
+      source_options = mount_info[1]["source_options"]
+      sink_options = mount_info[1]["sink_options"]
       
-      # Extract, and mount the list of sources 
-      source = mount_info[1]["source"]
-      sink = mount_info[1]["sink"]
-      Command.mount(mount_info[1]["source"],
-                    mount_info[1]["sink"])
-
-      # Next make the mount available through the stated
-      # export mechanisms (if supplied)
-      
-      unless mount_info[1]["export"].nil? or mount_info[1]["export"].empty? then
-
-        mount_info[1]["export"].each{|export|
-
-          case export[0]
-          when "ggated"
-            ggated_list << "#{export[1]["networks"]} RW /dev/md#{mount_info[1]["md_index"]}a"
-          end
-        }
-
-      end
-
-    }
-    
-    # Write the mount files
-    File.open("/etc/gg.exports", 'w') {|file| 
-      ggated_list.each{|line|
-        file.puts line
-      } 
-    }
-
+      Command.mount(source, source_options, sink, sink_options)                               
+    }                                                                                           
   end
 
 end

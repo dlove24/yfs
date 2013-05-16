@@ -27,21 +27,24 @@ module Command
     # Parse the configuration file
     config = YAML.load(File.open(config_file))
     
-    # Extract, and mount the list of sources
+    # Find the named mount, extract the sink, source and options
+    # and then do the mount
     config.each{|mount_info|
-      Command.mount_index(mount_info[1][:md_index],
-                          mount_info[1][:source])
+      if mount_info == mount_name then
+        source = URI(mount_info[1]["source"].to_s)                                                
+        sink = URI(mount_info[1]["sink"].to_s)                                                    
+                                                                                                
+        source_options = mount_info[1]["source_options"].to_s                                     
+        sink_options = mount_info[1]["sink_options"].to_s                                         
+                                                                                                
+        Command.mount(source, source_options, sink, sink_options) 
+      end
     }
   end
   
   # Mount a source by index
-  def Command.mount(mount_source, mount_sink)
-    source = URI(mount_source.to_s)
-    sink = URI(mount_sink.to_s)
-
-    puts source
-    puts sink
-
+  def Command.mount(source, source_options, sink, sink_options)
+    
     # Do the actual mount according to the specified scheme
     case sink.scheme
     when "mdimage"
