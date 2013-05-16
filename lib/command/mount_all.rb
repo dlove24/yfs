@@ -25,10 +25,29 @@ module Command
     # Parse the configuration file
     config = YAML.load(File.open(config_file))
 
-    # Extract, and mount the list of sources
     config.each{|mount_info|
+      
+      # Extract, and mount the list of sources 
       Command.mount_index(mount_info[1]["md_index"], 
                           mount_info[1]["source"])
+
+      # Next make the mount available through the stated
+      # export mechanisms
+      ggated_list = Array.new
+
+      mount_info[1]["export"].each{|export|
+
+        case export[0]
+        when "ggated"
+          ggated_list << "#{export[1]["networks"]} RW /dev/md#{mount_info[1]["md_index"]}a"
+        end
+
+      }
+
+      # Write the mount files
+      File.open("/etc/gg.exports", 'w') {|file| 
+        file.write(ggated_list.to_s) 
+      }
     }
 
   end

@@ -38,10 +38,13 @@ module Command
   def Command.mount_index(mount_index, mount_source)
     uri = URI(mount_source.to_s)
 
-    # Do the actual mount according to the specified scheme
-    case uri.scheme
+    # Only do the mount if the source is not yet mounted
+    unless File.exists?("/dev/md#{mount_index}")
+      # Do the actual mount according to the specified scheme
+      case uri.scheme
       when "mdimage"
         %x[mdconfig -a -t vnode -f #{uri.path} -u #{mount_index}]
+      end
     end
   end
 
