@@ -23,7 +23,7 @@ require 'uri'
 module Command 
 
   # Mount a source by name
-  def Command.mount(config_file, mount_name)
+  def Command.mount_by_name(config_file, mount_name)
     # Parse the configuration file
     config = YAML.load(File.open(config_file))
     
@@ -35,15 +35,35 @@ module Command
   end
   
   # Mount a source by index
-  def Command.mount_index(mount_index, mount_source)
-    uri = URI(mount_source.to_s)
+  def Command.mount(mount_source, mount_sink)
+    source = URI(mount_source.to_s)
+    sink = URI(mount_sink.to_s)
 
-    # Only do the mount if the source is not yet mounted
-    unless File.exists?("/dev/md#{mount_index}")
-      # Do the actual mount according to the specified scheme
-      case uri.scheme
-      when "mdimage"
-        %x[mdconfig -a -t vnode -f #{uri.path} -u #{mount_index}]
+    puts source
+    puts sink
+
+    # Do the actual mount according to the specified scheme
+    case sink.scheme
+    when "mdimage"
+      # Only do the mount if the source is not yet mounted
+      unless File.exists?(sink.path) then
+        %x[mdconfig -a -t vnode -f #{source.path} -u #{sink.path[-1]}]
+      end
+
+    when "file"
+      # Exactly how we mount the file-system depends on the source
+      case source.scheme
+      when "ggate"
+        index = source.path[-1]
+        puts index
+
+        if %x[ggatec create -u #{index} #{source.host} #{source.path}] then
+          puts "Error: The mount via ggatec failed. Tried 'gatec create -u #{index} #{source.host} #{source.path}'"
+          Trollop::die
+        end
+
+        %x[mount_ufs /dev/ggate#{index} #{sink.path}]
+
       end
     end
   end
