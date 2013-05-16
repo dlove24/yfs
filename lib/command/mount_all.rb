@@ -48,7 +48,9 @@ module Command
     
     # Write the mount files
     File.open("/etc/gg.exports", 'w') {|file| 
-      file.write(ggated_list.to_s) 
+      ggated_list.each{|line|
+        file.puts line
+      } 
     }
 
   end
