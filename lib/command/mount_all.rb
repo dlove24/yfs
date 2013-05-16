@@ -25,6 +25,8 @@ module Command
     # Parse the configuration file
     config = YAML.load(File.open(config_file))
 
+    ggated_list = Array.new
+    
     config.each{|mount_info|
       
       # Extract, and mount the list of sources 
@@ -33,7 +35,6 @@ module Command
 
       # Next make the mount available through the stated
       # export mechanisms
-      ggated_list = Array.new
 
       mount_info[1]["export"].each{|export|
 
@@ -43,11 +44,11 @@ module Command
         end
 
       }
-
-      # Write the mount files
-      File.open("/etc/gg.exports", 'w') {|file| 
-        file.write(ggated_list.to_s) 
-      }
+    }
+    
+    # Write the mount files
+    File.open("/etc/gg.exports", 'w') {|file| 
+      file.write(ggated_list.to_s) 
     }
 
   end
